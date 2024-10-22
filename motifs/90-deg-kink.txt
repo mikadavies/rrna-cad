@@ -1,0 +1,2 @@
+Long edge: AGCUUUACUG
+Short edge: AGGU
