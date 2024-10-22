@@ -1,5 +1,16 @@
 # Rusty RNA (RRNA)
 
+## Table of contents
+- [Rusty RNA (RRNA)](#rusty-rna-rrna)
+  - [Table of contents](#table-of-contents)
+  - [What is RRNA](#what-is-rrna)
+  - [TODO](#todo)
+  - [Documentation](#documentation)
+    - [How it works](#how-it-works)
+    - [RRNA File Syntax](#rrna-file-syntax)
+
+## What is RRNA
+
 RRNA is a CAD tool for designing RNA structures, in 2D or 3D, written in Rust.
 
 As it is currently being developped, it has no useful features yet. However it aims to achieve or implement the following
@@ -18,6 +29,14 @@ As it is currently being developped, it has no useful features yet. However it a
 - [ ] Turn schematic to interaction diagram
 
 ## Documentation
+
+### How it works
+
+RRNA is a rather naive CAD solution for RNA. After creating a wireframe structure in the editor, or loading one from a file, RRNA matches each vertex with a predefined motif, based on the number of connections the vertex has.
+
+It then attempts to find a single path passing through every edge exactly twice. If this is done successfully, RRNA generates a random duplex-forming sequence, except where nucleotides are specified by the user or the motifs.
+
+More details on the way RRNA works can be found [here](docs/how_it_works.md).
 
 ### RRNA File Syntax
 
