@@ -1,0 +1,4 @@
+Bottom left: AGGGUUAGCC
+Top left: CAUACCGCAA
+Top Right: AGUGAAAGUU
+Bottom Right: GGUCGAUCAC
