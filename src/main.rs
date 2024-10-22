@@ -1,6 +1,7 @@
 mod graph;
 mod motifs;
 mod motif_assembler;
+mod pathfinder;
 mod plotter;
 
 fn main() {

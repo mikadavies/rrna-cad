@@ -1,4 +1,4 @@
-use crate::{graph::Graph, motifs};
+use crate::{graph::Graph, motifs, pathfinder};
 
 
 impl Graph {
@@ -24,6 +24,18 @@ impl Graph {
                 _ => Motif::KL(HairpinID::B)
             },
         })
+    }
+
+    pub fn find_path(&self) -> Vec<usize> {
+        match pathfinder::find_single_path(self.iter_edges(), self.iter_vertices()) {
+            Some(single_path) => {
+                single_path
+            },
+            None => {
+                let path: Vec<usize> = Vec::new();
+                path
+            }
+        }        
     }
 }
 

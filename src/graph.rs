@@ -13,7 +13,7 @@ pub struct Graph {
 impl Graph {
     pub fn add_vertex(&mut self, position: Vec3, class: VertexType) {
         log::trace!("Adding vertex (type: {class:?}) at position: {position:?}.");
-        self.vertices.push(Vertex { position, class, connections: 0 });
+        self.vertices.push(Vertex { position, class, connections: 0 , edges: [None; 4]});
     }
 
     pub fn add_edge(&mut self, origin: usize, destination: usize) {
@@ -66,12 +66,24 @@ impl Graph {
     }
 
     fn add_edge_unchecked(&mut self, origin: usize, destination: usize) {
-        let mut vorigin: Vertex = *self.vertices.get_mut(origin).unwrap();
-        let mut vdestination: Vertex = *self.vertices.get_mut(destination).unwrap();
-
-        self.edges.push(Edge{origin, destination, length: vorigin.position.distance(vdestination.position)});
-        vorigin.connections += 1;
-        vdestination.connections += 1;
+        {
+            // Add edge
+            let vorigin: Vertex = *self.vertices.get(origin).unwrap();
+            let vdestination: Vertex = *self.vertices.get(destination).unwrap();
+            self.edges.push(Edge{origin, destination, length: vorigin.position.distance(vdestination.position)});
+        }{
+            // Update origin
+            let vorigin: &mut Vertex = self.vertices.get_mut(origin).unwrap();
+            vorigin.connections += 1;
+            let local_edge_index: usize = vorigin.edges.iter().position(|&x| x.is_none()).unwrap();
+            *vorigin.edges.get_mut(local_edge_index).unwrap() = Some(self.edges.len() - 1);
+        }{
+            // Update Destination
+            let vdestination: &mut Vertex = self.vertices.get_mut(destination).unwrap();
+            vdestination.connections += 1;
+            let local_edge_index: usize = vdestination.edges.iter().position(|&x| x.is_none()).unwrap();
+            *vdestination.edges.get_mut(local_edge_index).unwrap() = Some(self.edges.len() - 1);
+        }
     }
 
     pub fn to_ron(&self, path: &str) {
@@ -120,6 +132,7 @@ pub struct Vertex {
     pub position: Vec3,
     pub class: VertexType,
     pub connections: u8,
+    pub edges: [Option<usize>; 4]
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
