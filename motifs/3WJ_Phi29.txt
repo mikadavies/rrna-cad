@@ -1,3 +1,0 @@
-Left: UACUAA
-Top: UUGUUUC
-Right: GUGUA
