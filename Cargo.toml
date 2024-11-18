@@ -20,16 +20,19 @@ glam = {version = "0.29", features=[
 # RNG
 nanorand = "0.7"
 
-[dev-dependencies]
-criterion = "0.5"
+# String similarity
+strsim = "0.11"
 
-[[bench]]
-name = "benchmark"
-harness = false
-
-[[bin]]
-name = "bench_bin"
-path = "src/main.rs"
+#[dev-dependencies]
+#criterion = "0.5"
+#
+#[[bench]]
+#name = "benchmark"
+#harness = false
+#
+#[[bin]]
+#name = "bench_bin"
+#path = "src/main.rs"
 
 [profile.dev]
 lto = "off"

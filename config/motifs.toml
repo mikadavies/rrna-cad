@@ -1,0 +1,19 @@
+# Motifs definition
+# Hairpin will be deprecated soon
+
+hairpin = "AGUCCACAA"
+
+kink = "AUCAA"
+
+three-way-junction = [
+    "UUUU", 
+    "UUUU", 
+    "UUUU"
+]
+
+four-way-junction = [
+    "UU", 
+    "UU", 
+    "UU", 
+    "UU"
+]

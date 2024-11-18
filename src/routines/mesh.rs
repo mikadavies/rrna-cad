@@ -107,11 +107,11 @@ impl Mesh {
         let file_contents: String = std::io::read_to_string(
             std::fs::File::open(path).expect("Could not open motifs file"),
         )
-        .expect("Could not read motifs file");
+        .expect("Could not read mesh file");
 
         // Load toml data
         log::debug!("Parsing mesh TOML data");
-        let toml_data: toml::map::Map<String, toml::Value> = file_contents.parse::<toml::Table>().expect("Invalid format in 'motifs.toml'");
+        let toml_data: toml::map::Map<String, toml::Value> = file_contents.parse::<toml::Table>().expect("Invalid format in 'mesh.toml'");
 
         // Deserialise vertices
         log::debug!("Parsing vertex data");
