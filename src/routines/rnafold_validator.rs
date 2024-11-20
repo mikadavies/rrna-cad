@@ -1,3 +1,5 @@
+// This does not work yet
+
 use std::{io::Write, process::{Command, ExitStatus}, thread::sleep};
 
 use strsim::hamming;
@@ -35,12 +37,14 @@ pub fn run_fold(sequence: &str) {
     }
 }
 
+#[inline(always)]
 pub fn fetch_brackets() -> String {
     let output_brackets: String = std::fs::read_to_string("output/sequence.out").unwrap();
     let output: &str = output_brackets.lines().nth(1).unwrap().split_whitespace().nth(0).unwrap();
     output.to_string()
 }
 
+#[inline(always)]
 pub fn compare_brackets(target: &str, similarity_threshold: f64) -> bool {
     let output: String = fetch_brackets();
     let similarity: f64 = 1.0 - (hamming(target, &output).unwrap() as f64 / 100.0);
@@ -58,7 +62,7 @@ pub fn run_until_successful(
     let mut attempt: usize = 1;
     while !is_same {
         log::info!("Sequence attempt {attempt}");
-        let sequence: String = generate_sequence(mesh, path, motifs);
+        let [_db_sequence, sequence]: [String; 2] = generate_sequence(mesh, path, motifs);
         run_fold(&sequence);
         is_same = compare_brackets(target, similarity_threshold);
         attempt += 1;
@@ -68,4 +72,12 @@ pub fn run_until_successful(
 
     log::info!("Target: \n{target}\n");
     log::info!("Output: \n{output}\n");
+}
+
+pub fn clean_output() {
+    let sequence_out: String = std::fs::read_to_string("output/sequence.out").unwrap();
+    let sequence = sequence_out.lines().nth(0).unwrap();
+    let dots_brackets = sequence_out.lines().nth(1).unwrap().split_whitespace().nth(0).unwrap();
+
+    std::fs::write("output/output.txt", format!("{sequence}\n{dots_brackets}")).unwrap();
 }
