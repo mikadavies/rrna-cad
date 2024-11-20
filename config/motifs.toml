@@ -1,7 +1,7 @@
 # Motifs definition
 # Hairpin will be deprecated soon
 
-hairpin = "AGUCCACAA"
+hairpin = "AAUGCCGUA"
 
 kink = "AUCAA"
 
