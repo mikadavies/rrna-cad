@@ -3,8 +3,7 @@
 use routines::{
     graph::{Graph, Tree}, 
     mesh::Mesh, 
-    rnafold_validator::run_until_successful, 
-    sequencer::{dot_bracket_notation, generate_sequence, MotifStorage}
+    sequencer::{generate_sequence, MotifStorage}
 };
 
 pub mod routines;
@@ -32,14 +31,7 @@ fn main() {
     log::debug!("Path: {path:?}");
 
     // Generate sequence
-    let sequence: String = generate_sequence(&mesh, &path, &motifs);
-    log::info!("Sequence:\n {sequence}");
-
-    // Write in dot bracket notation
-    let dots_brackets: String = dot_bracket_notation(&mesh, &path, &motifs);
-    log::info!("Dot-bracket notation:\n {dots_brackets}");
-
-    // Run RNAFold
-    let similarity_threshold: f64 = 0.25;
-    run_until_successful(&mesh, &path, &motifs, &dots_brackets, similarity_threshold);
+    let [db_sequence, nt_sequence]: [String; 2] = generate_sequence(&mesh, &path, &motifs);
+    log::info!("Sequence:\n {nt_sequence}");
+    log::info!("Brackets:\n {db_sequence}");    
 }

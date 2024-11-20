@@ -1,7 +1,7 @@
 use nanorand::{Rng, WyRand};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use super::mesh::{Edge, Mesh};
+use super::{graph::AbstractEdge, mesh::{Edge, Mesh}};
 
 pub fn dot_bracket_notation(mesh: &Mesh, path: &[(bool, usize)], motifs: &MotifStorage) -> String {
     let mut brackets: String = String::new();
@@ -15,7 +15,7 @@ pub fn dot_bracket_notation(mesh: &Mesh, path: &[(bool, usize)], motifs: &MotifS
         if let Some(&(is_next_hairpin, next_vertex)) = path.get(index + 1) {
             // Process nodes
             {
-                if is_next_hairpin {
+                if is_hairpin {
                     // Get current node motif size
                     let num_bases: usize = motifs.get(
                         1
@@ -72,108 +72,179 @@ pub fn dot_bracket_notation(mesh: &Mesh, path: &[(bool, usize)], motifs: &MotifS
     brackets
 }
 
-pub fn generate_sequence(mesh: &Mesh, path: &[(bool, usize)], motifs: &MotifStorage) -> String {
-    let mut sequence: String = String::new();
-    
-    let mut visited_edges: FxHashMap<Edge, String> = FxHashMap::default();
-    let mut node_visit_counts: Vec<u8> = mesh.vertices.iter().map(|_| 0).collect();
-    let mut kissing_loop_visits: Vec<u8> = mesh.vertices.iter().map(|_| 0).collect();
-    let mut edge_sequences: Vec<String> = Vec::with_capacity(path.len() - 1);
-    let mut node_sequences: Vec<String> = Vec::with_capacity(path.len() - 1);
-    let rng: &mut WyRand = &mut WyRand::new();
+pub fn generate_sequence(mesh: &Mesh, path: &[(bool, usize)], motifs: &MotifStorage) -> [String; 2] {
+    // Get dot bracket notation
+    let db_sequence: String = dot_bracket_notation(mesh, path, motifs);
+    // Initialise nucleotide sequence
+    let mut nt_sequence: String = db_sequence.clone();
 
-    path.iter().enumerate().for_each(|(index, &(is_hairpin, vertex))| {
-        // Last node is initial node, so ignore
-        if let Some(&(is_next_hairpin, next_vertex)) = path.get(index + 1) {
-            // Process nodes
-            {
-                if is_next_hairpin {
-                    // Get current node visit count, update for future reference
-                    let kl_visits: u8 = *kissing_loop_visits.get(vertex).unwrap();
+    // Assign motif sequences to each node of the path
+    let mut node_visit_counter: Vec<u8> = mesh.vertices.iter().map(|_| 0).collect();
+    let motif_path: Vec<&str> = path.iter().enumerate().map(|(i, &(is_hairpin, index))| {
+        if i + 1 < path.len() {
+            if is_hairpin {
+                motifs.hairpin.as_str()
+            } else {
+                log::debug!("Index: {index}");
+                log::debug!("Visits: {:}", *node_visit_counter.get(index).unwrap());
+                let num_edges: u8 = mesh.vertices.get(index).unwrap().edge_count;
+                let motif: &str = *motifs.get(num_edges).get(
+                    *node_visit_counter.get(index).unwrap() as usize
+                ).unwrap();
+                *node_visit_counter.get_mut(index).unwrap() += 1;
+                motif
+            }
+        } else {
+            ""
+        }
+    }).collect();
 
-                    // Find hairpin motif
-                    let motif: String = motifs.get(
-                        1
-                    ).first().unwrap().to_string();
-
-                    // Pair if 2nd hald of KL
-                    if kl_visits > 0 {
-                        node_sequences.push(motif.chars().rev().map(|c| match c {
-                            'A' => 'U',
-                            'G' => 'C',
-                            'C' => 'G',
-                            'U' => 'A',
-                            _ => 'O'
-                        }).collect::<String>());
-                    } else {
-                        node_sequences.push(motif);
-                    }
-
-                    *kissing_loop_visits.get_mut(vertex).unwrap() += 1;
-                    *kissing_loop_visits.get_mut(next_vertex).unwrap() += 1;
-                } else {
-                    // Get current node visit count, update for future reference
-                    let node_visits: u8 = *node_visit_counts.get(vertex).unwrap();
-                    *node_visit_counts.get_mut(vertex).unwrap() += 1;
-
-                    // Get current node motif
-                    let motif: &str = motifs.get(
-                        mesh.vertices.get(vertex).unwrap().edge_count
-                    ).get(node_visits as usize).unwrap();
-
-                    // Add motif to sequence
-                    node_sequences.push(motif.to_string());
-                }
+    // Find nodes in db sequence
+    let mut motif_char_indices: Vec<[usize; 2]> = Vec::with_capacity(nt_sequence.len());
+    let mut edge_char_indices: Vec<[usize; 2]> = Vec::with_capacity(mesh.edges.len());
+    db_sequence.char_indices().for_each(|(i, current)| {
+        // Find motif indices
+        {
+            // Update record if we start on a "."
+            if (i == 0) && (current == '.') {
+                motif_char_indices.push([i,0]);
             }
 
-            // Process edges
-            {
-                // Find edge
-                let edge: Edge = *mesh.edges.iter().find(|&edge| 
-                    ((edge.destination == next_vertex) && (edge.origin == vertex))
-                ).unwrap();
-
-                // Determine edge length
-                let num_bases: usize = if is_hairpin || is_next_hairpin {
-                    edge.length / 2
-                } else {
-                    edge.length
-                };
-                // If edge (or reverse) already visited: Closed parentheses -> paired to prior base
-                if !visited_edges.contains_key(&edge.reverse()) {
-                    // If opposite edge not already visited: Generate sequence
-                    let seq: String = (0..num_bases).map(|_| match rng.generate_range(0..4u8){
-                        0 => 'A',
-                        1 => 'G',
-                        2 => 'C',
-                        3 => 'U',
-                        _ => 'G'
-                    }).collect();
-                    visited_edges.insert(edge, seq.clone());
-                    edge_sequences.push(seq);
-                } else {
-                    // If opposite edge not already visited: Reverse existing sequence
-                    let seq: &str = visited_edges.get(&edge.reverse()).unwrap();
-                    edge_sequences.push(seq.chars().rev().map(|c| match c {
-                        'A' => 'U',
-                        'G' => 'C',
-                        'U' => 'A',
-                        'C' => 'G',
-                        _ => 'O'
-                    }).collect());
+            // Update based on character change
+            if let Some(next) = db_sequence.chars().nth(i+1) {
+                // Start recording if entering unpaired region
+                if next != current && next == '.' {
+                    // Move to next motif
+                    motif_char_indices.push([i+1, 0]);
+                // Stop recording if exiting unpaired region
+                } else if next != current && next != '.' {
+                    *motif_char_indices.last_mut().unwrap().last_mut().unwrap() = i+1;
                 }
-            }            
+            }
         }
+        // Find edge indices
+        {
+            // Update record if we start on a "."
+            if (i == 0) && (current == '(' || current == ')') {
+                edge_char_indices.push([i,0]);
+            }
+
+            // Update based on character change
+            if let Some(next) = db_sequence.chars().nth(i+1) {
+                // Start recording if entering unpaired region
+                if next != current && (next == '(' || next == ')') {
+                    // Move to next motif
+                    edge_char_indices.push([i+1, 0]);
+                // Stop recording if exiting unpaired region
+                } else if next != current && (next != '(' || next != ')') {
+                    *edge_char_indices.last_mut().unwrap().last_mut().unwrap() = i+1;
+                }
+            }
+        }
+
     });
 
-    log::debug!("Length difference{:}", path.len() - node_sequences.len());
+    // Match edges
+    let mut visited_edges: FxHashMap<AbstractEdge, usize> = FxHashMap::default();
+    let edges: Vec<isize> = path.iter().enumerate().filter_map(|(index, &(_is_hairpin, vertex))| {
+        if let Some(&(_is_next_hairpin, next_vertex)) = path.get(index + 1) {
+            if let Some(&i) = visited_edges.get(&AbstractEdge::new(next_vertex, vertex)) {
+                Some(-(i as isize))
+            }
+            else {
+                visited_edges.insert(AbstractEdge::new(vertex, next_vertex), index + 1);
+                Some(index as isize + 1)
+            }
+        } else {
+            None
+        }
+    }).collect();
+    log::debug!("Edges: {edges:?}");
 
-    (0..path.len() - 1).for_each(|index| {
-        sequence.push_str(node_sequences.get(index).unwrap());
-        sequence.push_str(edge_sequences.get(index).unwrap());
+    // Generate edge sequences
+    let rng: &mut WyRand = &mut WyRand::new(); 
+    let mut edge_sequences: Vec<String> = Vec::with_capacity(visited_edges.len());
+
+    // Place sequences
+    let mut last_end: usize = 0;
+    let mut edge_index: usize = 0;
+    motif_char_indices.iter().enumerate().for_each(|(i, indices)| {
+        let start: usize = *indices.first().unwrap();
+        let end: usize = *indices.last().unwrap();
+
+        // Replace motifs
+        nt_sequence.replace_range(
+            start..end, 
+            motif_path.get(i).unwrap()
+        );
+
+        // Ensure GC base-pairs entering motif
+        if start > 0 {
+            nt_sequence.replace_range(start-1..start, "G");
+        }
+        if end < nt_sequence.len() {
+            nt_sequence.replace_range(end..end+1, "C");
+        }
+
+        // Deal with edge
+        if start - last_end > 0 {
+            let edge_range: std::ops::Range<usize> = (last_end+1)..(start-1);
+            let edge_id: isize = *edges.get(edge_index).unwrap();
+            if edge_id.is_positive() {
+                let sequence: String = generate_random_sequence(rng, edge_range.clone());
+                nt_sequence.replace_range(edge_range, &sequence);
+                edge_sequences.push(sequence)
+            } else {
+                if let Some(seq) = edge_sequences.get(edge_id.abs() as usize - 1) {
+                    let sequence: String = complement_sequence(seq);
+                    nt_sequence.replace_range(edge_range, &sequence);
+                    edge_sequences.push(sequence);
+                }
+            }
+            edge_index += 1;
+        }
+
+        if i + 1 == motif_char_indices.len() {
+            let edge_range: std::ops::Range<usize> = (end+1)..(nt_sequence.len());
+            let edge_id: isize = *edges.get(edge_index).unwrap();
+            if edge_id.is_positive() {
+                let sequence: String = generate_random_sequence(rng, edge_range.clone());
+                nt_sequence.replace_range(edge_range, &sequence);
+                edge_sequences.push(sequence)
+            } else {
+                if let Some(seq) = edge_sequences.get(edge_id.abs() as usize - 1) {
+                    let sequence: String = complement_sequence(seq);
+                    nt_sequence.replace_range(edge_range, &sequence);
+                    edge_sequences.push(sequence);
+                }
+            }
+            edge_index += 1;
+        }
+
+        last_end = end;
     });
 
-    sequence
+    nt_sequence.push('G');
+
+    [db_sequence, nt_sequence]
+}
+
+fn generate_random_sequence(rng: &mut WyRand, range: std::ops::Range<usize>) -> String {
+    range.map(|_| match rng.generate_range(0..7u8) {
+        0 => 'A',
+        1 | 2 => 'U',
+        3   => 'C',
+        _ => 'G'
+    }).collect()
+}
+
+fn complement_sequence(sequence: &str) -> String {
+    sequence.chars().rev().map(|c| match c {
+        'A' => 'U',
+        'G' => 'C',
+        'U' => 'A',
+        _ => 'G'
+    }).collect()
 }
 
 pub struct MotifStorage {
