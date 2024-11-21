@@ -17,11 +17,16 @@ glam = {version = "0.29", features=[
     "fast-math",
     "core-simd",
 ]}
+
 # RNG
 nanorand = "0.7"
 
 # String similarity
 strsim = "0.11"
+
+# CLI progress bar
+indicatif = "0.17"
+
 
 #[dev-dependencies]
 #criterion = "0.5"
