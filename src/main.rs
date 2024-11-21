@@ -1,12 +1,11 @@
 #![feature(get_many_mut, extend_one, ascii_char)]
 
 use routines::{
-    graph::{Graph, Tree}, 
-    mesh::Mesh, 
-    sequencer::{generate_sequence, MotifStorage}
+    graph::{Graph, Tree}, mesh::Mesh, rnafold_validator::similarity_test, sequencer::MotifStorage
 };
 
 pub mod routines;
+
 
 fn main() {
     #[cfg(debug_assertions)]
@@ -29,9 +28,12 @@ fn main() {
     let mut path: Vec<(bool, usize)> = Vec::new();
     tree.find_path(&mesh, &mut path, 3);
     log::debug!("Path: {path:?}");
-
-    // Generate sequence
-    let [db_sequence, nt_sequence]: [String; 2] = generate_sequence(&mesh, &path, &motifs);
-    log::info!("Sequence:\n {nt_sequence}");
-    log::info!("Brackets:\n {db_sequence}");    
+   
+    let (mean_accuracy, ([best_result, best_result_db], result_acc)): (f64, ([String;2], f64)) = 
+        similarity_test(5000, &mesh, &path, &motifs);
+    log::info!("Mean similarity: {mean_accuracy:.2}%");
+    log::info!("Highest accuracy: {result_acc:.2}%");
+    log::info!("Best sequence: \n{best_result}\n{best_result_db}");
+    
+    //run_until_successful(&mesh, &path, &motifs, 90.0);
 }
