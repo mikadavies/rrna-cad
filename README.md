@@ -1,4 +1,4 @@
-# RRNA CAD
+# rRNA CAD
 
 A CAD tool to design ssRNA sequences that cotranscriptionally fold into desired shapes. The sequence generation method is based on motifs inspired by tecto-RNA and [this paper by Li et al.](https://doi.org/10.1038/s41467-018-04652-4).
 
@@ -13,7 +13,25 @@ rRNA CAD is composed of 4 main modules:
 
 ### `graph.rs`
 
-TODO
+#### Terminology
+**Edge**<br>
+An edge between two vertices, it has an origin and a destination. It is represented as a tuple of 2 unique IDs of the form `(origin, destination)`.
+
+**Vertex / Node**<br>
+A vertex in your structure, a point in 3D space. Each vertex has a unique identifier, and must be part of an edge. As such, each vertex has at least one parent or one child.
+
+#### `construct_tree(edges)`
+This is a function that takes an array of edges as an input. These are defined by the user, and connect vertices to each other. In this function, vertices are only referenced by their unique identifiers, and there is therefore no physical or dimensional information. The function iterates over all edges, constructing a tree describing the hierarchical relationship between vertices.
+
+In cases where there is a cycle (i.e. a child vertex is the parent of one of its parent vertices), two new vertices are created, representing a kissing-loop in the RNA structure. Each vertex in the edge is assigned its corresponding one of the new vertices, and the uIDs of the new vertices are copied to a `cycle_breakers` array.
+
+This function produces a `Tree` as an output. The tree has three components:
+- `edges`: An array of edges, like the input.
+- `nodes`: An array of vertices, or nodes, storing the hierarchical data of the structure. Each node has a uID and contains the uID of a parent node and the uIDs its children nodes.
+- `cycle_breakers`: An array of cycle-breaking pairs. It contains the uIDS of kissing-loop nodes created to avoid cyclical structures, which would be impossible for many ssRNA configurations.
+
+#### `sort_tree_edges(tree, node_coordinates)`
+A function that takes a `Tree` and an array of 3D points as inputs. 
 
 ### `sequencer.rs`
 
