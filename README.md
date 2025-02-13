@@ -2,6 +2,17 @@
 
 A CAD tool to design ssRNA sequences that cotranscriptionally fold into desired shapes. The sequence generation method is based on motifs inspired by tecto-RNA and [this paper by Li et al.](https://doi.org/10.1038/s41467-018-04652-4).
 
+## Table of contents
+- [Usage](#usage)
+- [How it works](#how-it-works)
+  - [3D structure to RNA path](#graphrs)
+  - [Sequence generation](#sequencerrs)
+  - [User interface](#userinterfacers)
+  - [I/O](#iors)
+- [Benchmarks](#benchmarks)
+- [Reliability / Accuracy](#reliability)
+- [Related literature](#related-literature)
+
 ## Usage
 
 ## How it works
