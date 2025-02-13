@@ -1,39 +1,58 @@
-#![feature(get_many_mut, extend_one, ascii_char)]
-
-use routines::{
-    graph::{Graph, Tree}, mesh::Mesh, rnafold_validator::similarity_test, sequencer::MotifStorage
-};
+#![windows_subsystem = "windows"]
 
 pub mod routines;
 
+use routines::user_interface::run_gui;
 
-fn main() {
+pub fn main() {
     #[cfg(debug_assertions)]
-    simple_logger::init_with_level(log::Level::Debug).expect("Could not initialise logger");
+    {
+        use glam::{Vec3A, vec3a};
+        use routines::{
+            graph::{Tree, find_rna_path},
+            sequencer::generate_sequence,
+        };
+
+        simple_logger::init_with_level(log::Level::Debug).unwrap();
+
+        fn _create_test_edges() -> Vec<(usize, usize)> {
+            vec![
+                (4, 0),
+                (4, 1),
+                (4, 2),
+                (4, 3),
+                (0, 1),
+                (1, 2),
+                (2, 3),
+                (3, 0),
+            ]
+        }
+
+        fn _create_tree_vertices() -> Vec<Vec3A> {
+            vec![
+                vec3a(-10.0, 10.0, 0.0),
+                vec3a(10.0, 10.0, 0.0),
+                vec3a(10.0, -10.0, 0.0),
+                vec3a(-10.0, -10.0, 0.0),
+                vec3a(0.0, 0.0, 20.0),
+            ]
+        }
+
+        let mut tree: Tree = routines::graph::construct_tree(&_create_test_edges());
+        log::debug!("Tree:");
+        log::debug!("Nodes: {:?}", tree.nodes);
+        log::debug!("Cycle-Breaker Nodes: {:?}", tree.cycle_breakers);
+        log::debug!("Edges: {:?}", tree.edges);
+        log::debug!("Sorted Tree Nodes: {:?}", tree.nodes);
+        let coordinates: Vec<Vec3A> = _create_tree_vertices();
+        let path: Vec<usize> = find_rna_path(&mut tree, &coordinates);
+        log::info!("RNA Path: {path:?}",);
+        let sequence: String = generate_sequence(&path, &tree, &coordinates);
+        log::info!("Sequence: {sequence}");
+    }
+
     #[cfg(not(debug_assertions))]
-    simple_logger::init_with_level(log::Level::Info).expect("Could not initialise logger");
+    simple_logger::init_with_level(log::Level::Info).unwrap();
 
-    // Load motifs
-    let motifs: MotifStorage = MotifStorage::load_from_file("config/motifs.toml");
-
-    // Load mesh, create graph and tree
-    let mesh: Mesh = Mesh::load_from_file("config/mesh.toml");
-    let mesh_consumable: Mesh = mesh.clone();
-    let graph: Graph = Graph::from(mesh_consumable);
-    let mut tree: Tree = Tree::from_graph(&graph, 3);
-
-    log::info!("Tree: \n{tree}");
-    
-    // Find path
-    let mut path: Vec<(bool, usize)> = Vec::new();
-    tree.find_path(&mesh, &mut path, 3);
-    log::debug!("Path: {path:?}");
-   
-    let (mean_accuracy, ([best_result, best_result_db], result_acc)): (f64, ([String;2], f64)) = 
-        similarity_test(5000, &mesh, &path, &motifs);
-    log::info!("Mean similarity: {mean_accuracy:.2}%");
-    log::info!("Highest accuracy: {result_acc:.2}%");
-    log::info!("Best sequence: \n{best_result}\n{best_result_db}");
-    
-    //run_until_successful(&mesh, &path, &motifs, 90.0);
+    run_gui();
 }

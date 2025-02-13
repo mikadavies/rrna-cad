@@ -1,50 +1,37 @@
 [package]
-name = "rrna-cad"
+name = "rrna-cad-v4"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 # Fast hashing
-rustc-hash = "2.0"
+rustc-hash = "2.1"
 # Logging
-log = "0.4"
+log = {version = "0.4", features = ["std"]}
 simple_logger = "5.0"
-# Serialisation / Deserialisation
-toml = "0.8"
 # Fast 3D vectors
 glam = {version = "0.29", features=[
-    "approx",
     "fast-math",
     "core-simd",
 ]}
-
 # RNG
-nanorand = "0.7"
-
-# String similarity
-strsim = "0.11"
-
-# CLI progress bar
-indicatif = "0.17"
-
-
-#[dev-dependencies]
-#criterion = "0.5"
-#
-#[[bench]]
-#name = "benchmark"
-#harness = false
-#
-#[[bin]]
-#name = "bench_bin"
-#path = "src/main.rs"
+nanorand = {version="0.7", default-features = false, features=[
+    "alloc",
+    "std",
+    "tls",
+    "wyrand"
+]}
+# Sorting by key for floats
+radsort = "0.1"
+# UI & 3D render
+three-d = {version="0.18", features = ["egui-gui"]}
 
 [profile.dev]
 lto = "off"
-opt-level = "z"
+opt-level = 1
 
 [profile.dev.package."*"]
-opt-level = "z"
+opt-level = 3
 
 [profile.release]
 codegen-units = 1
@@ -52,3 +39,11 @@ lto = "fat"
 panic = "abort"
 strip = "symbols"
 opt-level = 3
+
+# Benchmarks
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "pathfinding_mul_add"
+harness = false

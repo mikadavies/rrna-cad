@@ -1,3 +1,44 @@
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use glam::{Vec3A, vec3a};
+
+pub fn criterion_benchmark(c: &mut Criterion) {
+    fn _create_test_edges() -> Vec<(usize, usize)> {
+        vec![
+            (4, 0),
+            (4, 1),
+            (4, 2),
+            (4, 3),
+            (0, 1),
+            (1, 2),
+            (2, 3),
+            (3, 0),
+        ]
+    }
+
+    fn _create_tree_vertices() -> Vec<Vec3A> {
+        vec![
+            vec3a(-10.0, 10.0, 0.0),
+            vec3a(10.0, 10.0, 0.0),
+            vec3a(10.0, -10.0, 0.0),
+            vec3a(-10.0, -10.0, 0.0),
+            vec3a(0.0, 0.0, 20.0),
+        ]
+    }
+
+    let mut tree: Tree = construct_tree(&_create_test_edges());
+    let coordinates: Vec<Vec3A> = _create_tree_vertices();
+
+    let mut group = c.benchmark_group("pathfinding bench");
+    group.sample_size(5_000_000);
+    group.bench_function("pathfinding-muladd", |b| {
+        b.iter(|| find_rna_path(black_box(&mut tree), black_box(&coordinates)))
+    });
+    group.finish();
+}
+
+criterion_group!(benches, criterion_benchmark);
+criterion_main!(benches);
+
 /* === NOTES ===
 As this is a prototype and proof of concept, I have use [.unwrap()] on a few occasions.
 These are used when there should be no cases that would cause the unwrap call to panic.
@@ -7,7 +48,7 @@ However, if an unwrap does cause the system to panic, then something is broken s
 
 use std::collections::{VecDeque, hash_map::Entry};
 
-use glam::{Quat, Vec2, Vec3A, Vec3Swizzles, vec3a};
+use glam::{Quat, Vec2, Vec3Swizzles};
 use nanorand::{Rng, WyRand};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -39,7 +80,7 @@ pub fn construct_tree(edges: &[(usize, usize)]) -> Tree {
     edges.iter().for_each(|&(origin, destination)| {
         log::debug!("Origin: {origin} | Destination: {destination}");
         // Check if destination is already in the tree
-        if tree_nodes.contains_key(&destination) && tree_nodes.contains_key(&origin) {
+        if tree_nodes.contains_key(&destination) {
             // If the destination already exists, a cycle is formed
             // break the cycle by creating intermediary nodes and edges
             let new_node_a: usize = max_id + 1;
@@ -263,7 +304,7 @@ pub fn find_rna_path(tree: &mut Tree, node_coordinates: &[Vec3A]) -> Vec<usize> 
                         "Break clause activated at length {current_length} / {target_length}"
                     );
                 }
-                //break;
+                break;
             } else {
                 let local_node_index: usize = current_node_index;
                 current_node_index = *parent;
