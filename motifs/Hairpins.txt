@@ -1,4 +1,0 @@
-Hairpin A: GGUCCUAAGU
-Hairpin B: CUACCCUAGG
-Hairpin C: ACCUCGUACA
-Hairpin D: UGGUAAUCGA
