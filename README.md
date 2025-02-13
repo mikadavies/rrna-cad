@@ -7,4 +7,4 @@ A CAD tool to design ssRNA sequences that cotranscriptionally fold into desired 
 
 
 ## Sources
-- Li, M., Zheng, M., Wu, S. *et al*. In vivo production of RNA nanostructures via programmed folding of single-stranded RNAs. *Nat Commun* **9**, 2196 (2018). [https://doi.org/10.1038/s41467-018-04652-4]
+- Li, M., Zheng, M., Wu, S. *et al*. In vivo production of RNA nanostructures via programmed folding of single-stranded RNAs. *Nat Commun* **9**, 2196 (2018). https://doi.org/10.1038/s41467-018-04652-4
