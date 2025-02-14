@@ -5,15 +5,17 @@ A CAD tool to design ssRNA sequences that cotranscriptionally fold into desired 
 ## Table of contents
 - [Usage](#usage)
 - [How it works](#how-it-works)
-  - [3D structure to RNA path (`graph.rs)`)](#graphrs)
+  - [3D structure to RNA path (`graph.rs`)](#graphrs)
   - [Sequence generation (`sequencer.rs`)](#sequencerrs)
   - [User interface (`user_interface.rs`)](#userinterfacers)
-  - [I/O (`io.rs`)](#iors)
+  - [File I/O (`io.rs`)](#iors)
 - [Benchmarks](#benchmarks)
 - [Reliability / Accuracy](#reliability)
 - [Related literature](#related-literature)
 
 ## Usage
+
+TODO
 
 ## How it works
 rRNA CAD is composed of 4 main modules:
@@ -42,7 +44,16 @@ This function produces a `Tree` as an output. The tree has three components:
 - `cycle_breakers`: An array of cycle-breaking pairs. It contains the uIDS of kissing-loop nodes created to avoid cyclical structures, which would be impossible for many ssRNA configurations.
 
 #### `sort_tree_edges(tree, node_coordinates)`
-A function that takes a `Tree` and an array of 3D points as inputs. 
+A function that takes a `Tree` and an array of 3D points as inputs, this uses the vertex hierarchy from the tree and coordinates of the vertices to sort the children of each node. This ensures the RNA path is physically possible. Due to the dimensionality of the structures, sorting edges by is not necessarily straightforward.
+
+To overcome problems with non-planar edges, all vertices are projected onto a randomly selected plane. If any edge is perpendicular to the plane, a new plane is determined. The edges are then sorted based on the clockwise rotation between their in-plane vector and the parent to current-node vector.
+
+This function mutates the tree in-place, and there is no output.
+
+#### `find_rna_path(tree, node_coordinates)`
+A function that traverses the tree edges with a path analogous to the path an RNA sequence would have to take (i.e. each edge is visited exactly twice, sensewise and antisensewise).The function then returns an array with the uIDs of the traversed nodes in the order they were visited.
+
+The function initially sorts the edges using `sort_tree_edges`, and thus the children of each node are visited in order. For a given node, the function visits its children in order, recursively. Once a node has no more unvisited children, the function returns to the node's parent, and repeats.
 
 ### `sequencer.rs`
 
