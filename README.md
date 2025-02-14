@@ -17,7 +17,9 @@ A CAD tool to design ssRNA sequences that cotranscriptionally fold into desired 
 
 ## Usage
 
-TODO
+### Installation
+
+The only installation option currently available is to compile from source. This requires the nightly version of [Rust](https://www.rust-lang.org/). To compile, simply clone the repository and run `cargo br` . To run, use `cargo rr`.
 
 ## How it works
 rRNA CAD is composed of 4 main modules:
