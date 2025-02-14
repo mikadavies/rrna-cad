@@ -1,5 +1,7 @@
 # rRNA CAD
 
+**This tool is currently under development and not yet functional.**
+
 A CAD tool to design ssRNA sequences that cotranscriptionally fold into desired shapes. The sequence generation method is based on motifs inspired by tecto-RNA and [this paper by Li et al.](https://doi.org/10.1038/s41467-018-04652-4).
 
 ## Table of contents
